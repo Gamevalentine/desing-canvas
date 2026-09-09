@@ -134,6 +134,7 @@ const DOC_KEY = "m3e:doc";
 const BEFORE_KEY = "m3e:doc:before";
 const DOC_LOCK = "m3e:doc:editor";
 const UI_KEY = "m3e:ui";
+const LANG_MIGRATION_KEY = "m3e:lang:vi1";
 
 type View = { x: number; y: number; z: number };
 type Snap = { groupId: string; index: number; pull: number };
@@ -348,7 +349,7 @@ export default function Page() {
   const [theme, setTheme] = useState<Theme>(DEFAULT_THEME);
   const patchTheme = (patch: Partial<Theme>) => setTheme((t) => ({ ...t, ...patch }));
   const [frame, setFrame] = useState<FrameMode>("phone");
-  const [lang, setLang] = useState<Lang>("ja");
+  const [lang, setLang] = useState<Lang>("vi");
   const changeLanguage = (next: Lang) => {
     setGlobalLang(next);
     initialLangRef.current = next;
@@ -648,7 +649,8 @@ export default function Page() {
         if (isProject(value)) setDraftBefore(value);
         else localStorage.removeItem(BEFORE_KEY);
       }
-      let initialLang: Lang = "ja";
+      let initialLang: Lang = "vi";
+      const migratedToVi = localStorage.getItem(LANG_MIGRATION_KEY) === "1";
       const u = localStorage.getItem(UI_KEY);
       if (u) {
         const ui = JSON.parse(u);
@@ -659,16 +661,18 @@ export default function Page() {
         if (ui.rightW) setRightW(ui.rightW);
         if (Array.isArray(ui.favorites)) setFavorites(ui.favorites);
         if (ui.mode) setMode(ui.mode);
-        if (isLang(ui.lang)) {
+        if (migratedToVi && isLang(ui.lang)) {
           initialLang = ui.lang;
           setLang(ui.lang);
+        } else {
+          setLang("vi");
         }
       } else {
-        const nl = (navigator.language ?? "").toLowerCase();
-        initialLang = nl.startsWith("zh") ? "zh" : nl.startsWith("ko") ? "ko" : nl.startsWith("ja") ? "ja" : "en";
+        initialLang = "vi";
         setLang(initialLang);
         queueMicrotask(() => fitRef.current());
       }
+      localStorage.setItem(LANG_MIGRATION_KEY, "1");
       setGlobalLang(initialLang);
       initialLangRef.current = initialLang;
       if (!d) {

@@ -1,4 +1,5 @@
 import { KIND_TEXT, Lang, SWIPE_TEXT, TRANSITION_TEXT, getLang } from "./i18n";
+import { VI_FONT_NOTE, VI_GENERAL, VI_PH, VI_STYLE_NOTES, VI_STYLE_NOTES_WEB, VI_THEME_NOTES, VI_WIDE_RAIL_STYLE } from "./prompt_vi";
 import { constrainModalRails } from "./rail";
 import {
   CONTENT_W,
@@ -38,6 +39,7 @@ const VARIANT_TEXT: Record<Lang, Record<Variant, string>> = {
   en: { filled: "filled", tonal: "tonal", elevated: "elevated", outlined: "outlined", text: "text" },
   zh: { filled: "填充", tonal: "色调", elevated: "浮起", outlined: "描边", text: "文字" },
   ko: { filled: "채움", tonal: "토널", elevated: "돌출", outlined: "윤곽선", text: "텍스트" },
+  vi: { filled: "tô đầy", tonal: "tông màu", elevated: "nổi", outlined: "viền", text: "văn bản" },
 };
 
 const hasText = (s?: string | null) => !!s && s.trim().length > 0;
@@ -72,6 +74,14 @@ function cardImage(it: Item, lang: Lang): string {
     if (pos === "background") return `배경 전체에 ${what}(텍스트 뒤에 스크림), `;
     return `위쪽에 ${what}${sized}, `;
   }
+  if (lang === "vi") {
+    const what = url ? `ảnh từ ${url}` : it.src ? "ảnh đã chọn" : `ảnh giữ chỗ${it.icon ? ` có biểu tượng ${it.icon}` : ""}`;
+    const sized = size ? ` (${pos === "top" ? "cao" : "rộng"} ${size}dp)` : "";
+    if (pos === "leading") return `với ${what}${sized} phủ phía trái toàn chiều cao, `;
+    if (pos === "trailing") return `với ${what}${sized} phủ phía phải toàn chiều cao, `;
+    if (pos === "background") return `với ${what} phủ toàn nền và có lớp scrim dưới chữ, `;
+    return `với ${what}${sized} ở phía trên, `;
+  }
   const what = url ? `an image from ${url}` : it.src ? "the provided image" : `a placeholder image${it.icon ? ` (${it.icon} icon)` : ""}`;
   const sized = size ? ` (${size}dp ${pos === "top" ? "tall" : "wide"})` : "";
   if (pos === "leading") return `with ${what}${sized} filling the leading side, `;
@@ -86,22 +96,22 @@ function cardText(it: Item, lang: Lang): string {
   const align = it.contentAlign;
   const auto = !it.noImage && cardImagePosOf(it) === "background" ? "end" : "start";
   if (align && align !== auto) {
-    const pos = lang === "ja" ? { start: "上", center: "中央", end: "下" } : lang === "zh" ? { start: "顶部", center: "垂直居中", end: "底部" } : lang === "ko" ? { start: "위", center: "가운데", end: "아래" } : { start: "top", center: "middle", end: "bottom" };
-    parts.push(lang === "ja" ? `文字は${pos[align]}寄せ` : lang === "zh" ? `文字${pos[align]}对齐` : lang === "ko" ? `텍스트 ${pos[align]} 정렬` : `text aligned to the ${pos[align]}`);
+    const pos = lang === "ja" ? { start: "上", center: "中央", end: "下" } : lang === "zh" ? { start: "顶部", center: "垂直居中", end: "底部" } : lang === "ko" ? { start: "위", center: "가운데", end: "아래" } : lang === "vi" ? { start: "trên", center: "giữa", end: "dưới" } : { start: "top", center: "middle", end: "bottom" };
+    parts.push(lang === "ja" ? `文字は${pos[align]}寄せ` : lang === "zh" ? `文字${pos[align]}对齐` : lang === "ko" ? `텍스트 ${pos[align]} 정렬` : lang === "vi" ? `chữ căn về ${pos[align]}` : `text aligned to the ${pos[align]}`);
   }
-  if (it.textColor) parts.push(lang === "ja" ? `文字色 ${it.textColor}` : lang === "zh" ? `文字颜色 ${it.textColor}` : lang === "ko" ? `텍스트 색상 ${it.textColor}` : `text in ${it.textColor}`);
+  if (it.textColor) parts.push(lang === "ja" ? `文字色 ${it.textColor}` : lang === "zh" ? `文字颜色 ${it.textColor}` : lang === "ko" ? `텍스트 색상 ${it.textColor}` : lang === "vi" ? `màu chữ ${it.textColor}` : `text in ${it.textColor}`);
   if (!parts.length) return "";
-  return lang === "en" ? ` (${parts.join(", ")})` : lang === "ko" ? ` (${parts.join(", ")})` : `（${parts.join("、")}）`;
+  return lang === "en" || lang === "ko" || lang === "vi" ? ` (${parts.join(", ")})` : `（${parts.join("、")}）`;
 }
 
 /** a card's background and corners when the author changed them, as one parenthetical */
 function cardLook(it: Item, lang: Lang): string {
   const parts: string[] = [];
-  if (it.fill) parts.push(lang === "ja" ? `背景 ${it.fill}` : lang === "zh" ? `背景 ${it.fill}` : lang === "ko" ? `배경 ${it.fill}` : `on ${it.fill}`);
+  if (it.fill) parts.push(lang === "ja" ? `背景 ${it.fill}` : lang === "zh" ? `背景 ${it.fill}` : lang === "ko" ? `배경 ${it.fill}` : lang === "vi" ? `nền ${it.fill}` : `on ${it.fill}`);
   if (it.corners) parts.push(boxCorners(it, lang));
-  else if (it.radiusTop !== undefined) parts.push(lang === "ja" ? `角丸 ${it.radiusTop}dp` : lang === "zh" ? `圆角 ${it.radiusTop}dp` : lang === "ko" ? `모서리 ${it.radiusTop}dp` : `${it.radiusTop}dp corners`);
+  else if (it.radiusTop !== undefined) parts.push(lang === "ja" ? `角丸 ${it.radiusTop}dp` : lang === "zh" ? `圆角 ${it.radiusTop}dp` : lang === "ko" ? `모서리 ${it.radiusTop}dp` : lang === "vi" ? `bo góc ${it.radiusTop}dp` : `${it.radiusTop}dp corners`);
   if (!parts.length) return "";
-  return lang === "en" ? ` ${parts.join(", ")}` : lang === "ko" ? `(${parts.join(", ")})` : `（${parts.join("、")}）`;
+  return lang === "en" ? ` ${parts.join(", ")}` : lang === "ko" || lang === "vi" ? ` (${parts.join(", ")})` : `（${parts.join("、")}）`;
 }
 
 /** an image's web address, when it was given as one rather than picked from a file */
@@ -120,6 +130,7 @@ function selectedText(it: Item, lang: Lang): string {
   if (lang === "ja") return i === 0 || !label ? "最初の項目が選択状態" : `「${label}」が選択状態`;
   if (lang === "zh") return i === 0 || !label ? "第一项为选中状态" : `“${label}”为选中状态`;
   if (lang === "ko") return i === 0 || !label ? "첫 항목 선택됨" : `"${label}" 선택됨`;
+  if (lang === "vi") return i === 0 || !label ? "mục đầu tiên được chọn" : `"${label}" được chọn`;
   return i === 0 || !label ? "the first one is selected" : `"${label}" is selected`;
 }
 
@@ -137,6 +148,7 @@ function railStateText(it: Item, lang: Lang): string {
   if (lang === "ja") return `。${component}、${it.railExpanded ? "展開状態" : "折りたたみ状態"}、幅 ${width}dp。${it.railModal ? "モーダル型：展開時はスクリム付きで本文に重ね、レイアウトの占有幅は 96dp のまま" : "非モーダル型：現在の幅だけレイアウトを占有"}。上部のメニューボタンで展開・折りたたみを切り替える`;
   if (lang === "zh") return `。${component}，${it.railExpanded ? "展开状态" : "折叠状态"}，宽 ${width}dp。${it.railModal ? "模态覆盖：展开时带遮罩覆盖内容，布局占位保持 96dp" : "非模态布局：按当前宽度占据布局空间"}。顶部菜单按钮切换展开与折叠`;
   if (lang === "ko") return `. ${component}, ${it.railExpanded ? "펼친 상태" : "접힌 상태"}, 너비 ${width}dp. ${it.railModal ? "모달 오버레이: 펼치면 스크림과 함께 콘텐츠를 덮고 레이아웃 점유 너비는 96dp로 유지" : "비모달 레이아웃: 현재 너비만큼 레이아웃 공간을 차지"}. 상단 메뉴 버튼으로 펼치기와 접기를 전환한다`;
+  if (lang === "vi") return `; ${component}, ${it.railExpanded ? "đang mở rộng" : "đang thu gọn"}, rộng ${width}dp; ${it.railModal ? "dạng modal: khi mở sẽ phủ nội dung bằng scrim nhưng vẫn chỉ chiếm 96dp trong bố cục" : "dạng thường: chiếm đúng chiều rộng hiện tại trong bố cục"}; nút menu phía trên chuyển mở rộng/thu gọn`;
   return `; ${component}, ${it.railExpanded ? "expanded" : "collapsed"}, ${width}dp wide; ${it.railModal ? "modal overlay: when expanded, cover the content with a scrim while keeping the layout footprint at 96dp" : "non-modal layout: reserve the current width in the layout"}; toggle expansion with the top menu button`;
 }
 
@@ -479,6 +491,73 @@ function itemKo(it: Item): string {
   }
 }
 
+
+function itemVi(it: Item): string {
+  const q = qe;
+  const v = VARIANT_TEXT.vi[it.variant];
+  const noun = KIND_TEXT.vi[it.kind]?.noun ?? it.kind;
+  switch (it.kind) {
+    case "button": return `${hasText(it.label) ? q(it.label) : "không có nhãn"} — nút ${v}${it.icon ? ` có biểu tượng ${it.icon}` : ""}${it.size ? `, rộng ${it.size}dp` : ""}`;
+    case "iconButton": return `nút biểu tượng ${v} với biểu tượng ${it.icon ?? "trống"}`;
+    case "fab": return `FAB ${v}${it.size && it.size >= 96 ? " cỡ lớn" : it.size && it.size <= 40 ? " cỡ nhỏ" : ""} với biểu tượng ${it.icon ?? "trống"}`;
+    case "extendedFab": return `FAB mở rộng ${v} ${q(it.label)}${it.icon ? ` với biểu tượng ${it.icon}` : ""}`;
+    case "chip": return `chip ${q(it.label)}${it.checked ? " (đang chọn)" : ""}${it.icon && !it.checked ? ` có biểu tượng ${it.icon}` : ""}`;
+    case "topAppBar": return `thanh ứng dụng trên có tiêu đề ${q(it.label)}${it.icon ? `, nút ${it.icon} bên trái` : ""}${it.icon2 ? `, ${it.icon2} bên phải` : ""}`;
+    case "bottomNav": {
+      const tabs = (it.tabs ?? []).map((x) => `${q(x.label || "không nhãn")} (${x.icon || "không biểu tượng"})`);
+      return `thanh điều hướng có ${tabs.length} mục: ${tabs.join(", ")}; ${selectedText(it, "vi")}`;
+    }
+    case "navRail": {
+      const tabs = (it.tabs ?? []).map((x) => `${q(x.label || "không nhãn")} (${x.icon || "không biểu tượng"})`);
+      return `thanh điều hướng cạnh có ${tabs.length} mục: ${tabs.join(", ")}; ${selectedText(it, "vi")}${railStateText(it, "vi")}`;
+    }
+    case "searchBar": return `thanh tìm kiếm với chữ giữ chỗ ${q(it.label)}${it.icon2 ? ` và biểu tượng ${it.icon2} ở cuối` : ""}`;
+    case "card": {
+      const style = it.variant === "elevated" ? "nổi" : it.variant === "outlined" ? "có viền" : "tô đầy";
+      return `thẻ ${style}${it.size2 ? ` cao ${it.size2}dp` : ""}${cardLook(it, "vi")} ${cardImage(it, "vi") || "với "}tiêu đề ${q(it.label)}${hasText(it.supporting) ? ` và nội dung ${q(it.supporting!)}` : ""}${cardText(it, "vi")}`;
+    }
+
+    case "listItem": return `${q(it.label)}${hasText(it.supporting) ? ` với văn bản phụ ${q(it.supporting!)}` : ""}${it.icon ? `, biểu tượng ${it.icon} ở đầu${it.iconFill === "none" ? " không có nền" : it.iconFill ? ` trên nền ${it.iconFill}` : ""}` : ""}${it.switch ? `, công tắc ở cuối (ban đầu ${it.checked ? "bật" : "tắt"})` : it.icon2 ? `, biểu tượng ${it.icon2} ở cuối` : ""}${it.fill && it.fill !== "surfaceContainerLow" ? `, nền ${it.fill}` : ""}`;
+    case "dialog": return `hộp thoại có tiêu đề ${q(it.label)}${hasText(it.supporting) ? `, nội dung ${q(it.supporting!)}` : ""}${it.icon ? ` và biểu tượng ${it.icon}` : ""}, với nút Hủy và OK`;
+    case "snackbar": return `thông báo nhanh ${q(it.label)}${hasText(it.supporting) ? ` có hành động ${q(it.supporting!)}` : ""}`;
+    case "textField": return `ô nhập văn bản ${it.variant === "filled" ? "tô đầy" : "có viền"} với nhãn ${q(it.label)}${it.icon ? `, biểu tượng ${it.icon} ở đầu` : ""}${hasText(it.supporting) ? `; văn bản phụ ${q(it.supporting!)}` : ""}`;
+    case "select": {
+      const opts = (it.tabs ?? []).map((x) => q(x.label || "không nhãn"));
+      const initial = it.selected !== undefined && it.tabs?.[it.selected] ? `, ban đầu chọn ${q(it.tabs[it.selected].label)}` : ", ban đầu chưa chọn";
+      return `danh sách thả xuống ${it.variant === "filled" ? "tô đầy" : "có viền"} với nhãn ${q(it.label)}, nhấn để chọn một mục (${opts.join(", ")}${initial})${it.icon ? `, có biểu tượng ${it.icon} ở đầu` : ""}${hasText(it.supporting) ? `; văn bản phụ ${q(it.supporting!)}` : ""}`;
+    }
+    case "switch": return `công tắc ${q(it.label)} (ban đầu ${it.checked ? "bật" : "tắt"}${it.noCheck ? ", không hiện dấu chọn trên tay nắm khi bật" : ""})`;
+    case "checkbox": return `ô chọn ${q(it.label)} (ban đầu ${it.checked ? "đã chọn" : "chưa chọn"})`;
+    case "slider": return `thanh trượt (giá trị ban đầu ${it.value ?? 40}%)`;
+    case "text": return `${it.bold ? "văn bản in đậm" : "văn bản"} ${q(it.label)}, cỡ ${it.size ?? 28}sp`;
+    case "image": return `ảnh vuông ${it.size ?? 200}dp${imageSrc(it) ? ` lấy từ ${imageSrc(it)}` : it.src ? " dùng ảnh đã chọn" : " dạng giữ chỗ"}`;
+    case "camera": return `khung xem trước camera ${viewSize(it, 4 / 3)}`;
+    case "map": return `bản đồ ${viewSize(it, 3 / 4)}`;
+    case "divider": return "đường phân cách";
+    case "box": return `${it.checked ? "bottom sheet" : "khung"} ${it.size ?? PHONE_W}×${it.size2 ?? 220}dp (nền ${it.fill ?? "surfaceContainerLow"}, ${boxCorners(it, "vi")})`;
+    case "loadingIndicator": return `chỉ báo tải biến đổi hình M3 Expressive${it.contained ? " có vùng chứa" : ""}`;
+    case "linearProgress": return `tiến trình tuyến tính ${it.wavy ? "gợn sóng " : ""}(${it.value === undefined ? "không xác định" : `${it.value}%`}${progressThickness(it) !== 4 ? `, rãnh dày ${progressThickness(it)}dp` : ""})`;
+    case "circularProgress": return `tiến trình tròn ${it.wavy ? "gợn sóng " : ""}(${it.value === undefined ? "không xác định" : `${it.value}%`}${progressThickness(it) !== 4 ? `, rãnh dày ${progressThickness(it)}dp` : ""})`;
+
+    case "splitButton": return `nút chia đôi ${v} ${q(it.label)}${it.icon ? ` có biểu tượng ${it.icon}` : ""}, phần cuối có mũi tên mở menu`;
+    case "fabMenu": {
+      const items = (it.tabs ?? []).map((x) => `${q(x.label || "không nhãn")} (${x.icon || "không biểu tượng"})`);
+      return `menu FAB mở từ FAB ${v}, hiển thị mở với ${items.length} mục xếp phía trên: ${items.join(", ")}`;
+    }
+    case "toolbar": {
+      const icons = (it.tabs ?? []).map((x) => x.icon || "trống").join(", ");
+      return `thanh công cụ nổi ${it.variant === "filled" ? "rực rỡ (primaryContainer)" : "tiêu chuẩn"} với các nút biểu tượng ${icons}`;
+    }
+    case "tabs": {
+      const labels = (it.tabs ?? []).map((x) => q(x.label || "không nhãn"));
+      return `hàng tab có ${labels.length} mục: ${labels.join(", ")}; ${selectedText(it, "vi")}`;
+    }
+    case "radio": return `nút chọn ${q(it.label)} (ban đầu ${it.checked ? "đã chọn" : "chưa chọn"})`;
+    case "badge": return hasText(it.label) ? `huy hiệu hiển thị ${q(it.label)}` : "huy hiệu dạng chấm nhỏ";
+    default: return noun;
+  }
+}
+
 /** a box's corners in words: the top / bottom pairs, or each corner when they differ */
 function boxCorners(it: Item, lang: Lang): string {
   const c = it.corners;
@@ -487,6 +566,7 @@ function boxCorners(it: Item, lang: Lang): string {
     if (lang === "ja") return `角丸は左上 ${c.tl}dp・右上 ${c.tr}dp・左下 ${c.bl}dp・右下 ${c.br}dp`;
     if (lang === "zh") return `圆角左上 ${c.tl}dp、右上 ${c.tr}dp、左下 ${c.bl}dp、右下 ${c.br}dp`;
     if (lang === "ko") return `모서리 왼쪽 위 ${c.tl}dp / 오른쪽 위 ${c.tr}dp / 왼쪽 아래 ${c.bl}dp / 오른쪽 아래 ${c.br}dp`;
+    if (lang === "vi") return `bo góc: trên trái ${c.tl}dp / trên phải ${c.tr}dp / dưới trái ${c.bl}dp / dưới phải ${c.br}dp`;
     return `corner radius ${c.tl}dp top-left / ${c.tr}dp top-right / ${c.bl}dp bottom-left / ${c.br}dp bottom-right`;
   }
   const t = c ? c.tl : (it.radiusTop ?? 28);
@@ -495,15 +575,17 @@ function boxCorners(it: Item, lang: Lang): string {
     if (lang === "ja") return `角丸 ${t}dp`;
     if (lang === "zh") return `圆角 ${t}dp`;
     if (lang === "ko") return `모서리 ${t}dp`;
+    if (lang === "vi") return `bo góc ${t}dp`;
     return `${t}dp corners`;
   }
   if (lang === "ja") return `角丸は上 ${t}dp・下 ${b}dp`;
   if (lang === "zh") return `圆角上 ${t}dp、下 ${b}dp`;
   if (lang === "ko") return `위쪽 모서리 ${t}dp / 아래쪽 ${b}dp`;
+  if (lang === "vi") return `bo góc trên ${t}dp / dưới ${b}dp`;
   return `corner radius ${t}dp top / ${b}dp bottom`;
 }
 
-const itemText = (it: Item, lang: Lang) => (lang === "ja" ? itemJa(it) : lang === "zh" ? itemZh(it) : lang === "ko" ? itemKo(it) : itemEn(it));
+const itemText = (it: Item, lang: Lang) => (lang === "ja" ? itemJa(it) : lang === "zh" ? itemZh(it) : lang === "ko" ? itemKo(it) : lang === "vi" ? itemVi(it) : itemEn(it));
 
 /* ================= connected runs ================= */
 
@@ -540,6 +622,13 @@ function groupText(g: Group, lang: Lang): string {
       : g.items.map((it) => `${q(it.label || "레이블 없음")}(${vt[it.variant]})`).join(", ");
     return `${names} 버튼 ${g.items.length}개를 가로로 연결한 버튼 그룹${same ? `(${vt[g.items[0].variant]})` : ""}`;
   }
+  if (lang === "vi") {
+    if (kind === "listItem") return `danh sách ${g.items.length} mục, từ trên xuống: ${g.items.map(itemVi).join("; ")}`;
+    if (kind === "chip") return `nhóm chip: ${g.items.map((it) => q(it.label) + (it.checked ? " (đã chọn)" : "")).join(", ")}`;
+    if (kind === "iconButton") return `nhóm nút biểu tượng nối nhau: ${g.items.map((it) => it.icon ?? "trống").join(", ")}`;
+    const names = same ? g.items.map((it) => q(it.label || "không nhãn")).join(", ") : g.items.map((it) => `${q(it.label || "không nhãn")} (${vt[it.variant]})`).join(", ");
+    return `nhóm ${g.items.length} nút nối ngang${same ? ` kiểu ${vt[g.items[0].variant]}` : ""}: ${names}`;
+  }
   if (kind === "listItem") return `a list of ${g.items.length} items, top to bottom: ${g.items.map(itemEn).join("; ")}`;
   if (kind === "chip") return `a chip group: ${g.items.map((it) => q(it.label) + (it.checked ? " (selected)" : "")).join(", ")}`;
   if (kind === "iconButton") return `a connected group of icon buttons: ${g.items.map((it) => it.icon ?? "empty").join(", ")}`;
@@ -554,9 +643,9 @@ function groupName(g: Group, lang: Lang): string {
   const it = g.items[0];
   const noun = KIND_TEXT[lang][it.kind]?.noun ?? it.kind;
   const q = quote(lang);
-  if (g.items.length > 1) return lang === "en" ? `the ${noun} group` : lang === "zh" ? `${noun}组` : lang === "ko" ? `${noun} 그룹` : `${noun}のグループ`;
-  if (it.kind === "box") return lang === "en" ? (it.checked ? "the bottom sheet" : "the box") : lang === "zh" ? (it.checked ? "底部面板" : "容器框") : lang === "ko" ? (it.checked ? "하단 시트" : "상자") : it.checked ? "ボトムシート" : "ボックス";
-  if (hasText(it.label) && it.kind !== "text") return lang === "en" ? `the ${q(it.label)} ${noun}` : `${q(it.label)}${lang === "ko" ? " " : ""}${noun}`;
+  if (g.items.length > 1) return lang === "en" ? `the ${noun} group` : lang === "zh" ? `${noun}组` : lang === "ko" ? `${noun} 그룹` : lang === "vi" ? `nhóm ${noun}` : `${noun}のグループ`;
+  if (it.kind === "box") return lang === "en" ? (it.checked ? "the bottom sheet" : "the box") : lang === "zh" ? (it.checked ? "底部面板" : "容器框") : lang === "ko" ? (it.checked ? "하단 시트" : "상자") : lang === "vi" ? (it.checked ? "bottom sheet" : "khung") : it.checked ? "ボトムシート" : "ボックス";
+  if (hasText(it.label) && it.kind !== "text") return lang === "en" ? `the ${q(it.label)} ${noun}` : lang === "vi" ? `${noun} ${q(it.label)}` : `${q(it.label)}${lang === "ko" ? " " : ""}${noun}`;
   return lang === "en" ? `the ${noun}` : noun;
 }
 
@@ -565,15 +654,16 @@ function groupName(g: Group, lang: Lang): string {
 function actionText(a: Action, frames: Frame[], lang: Lang): string | null {
   const q = quote(lang);
   if (a.to === BACK_TARGET) {
-    return lang === "ja" ? "前の画面に戻る（入ったときの遷移を逆再生する）" : lang === "zh" ? "返回上一个屏幕（反向播放进入时的过渡动画）" : lang === "ko" ? "이전 화면으로 돌아간다(진입 전환을 반대로 재생)" : "goes back to the previous screen (playing the entry transition in reverse)";
+    return lang === "ja" ? "前の画面に戻る（入ったときの遷移を逆再生する）" : lang === "zh" ? "返回上一个屏幕（反向播放进入时的过渡动画）" : lang === "ko" ? "이전 화면으로 돌아간다(진입 전환을 반대로 재생)" : lang === "vi" ? "quay lại màn hình trước và phát ngược hiệu ứng chuyển vào" : "goes back to the previous screen (playing the entry transition in reverse)";
   }
   const target = frames.find((f) => f.id === a.to);
   if (!target) return null;
   const tr = TRANSITION_TEXT[lang][a.transition];
-  const name = q(target.name || (lang === "en" ? "screen" : lang === "zh" ? "屏幕" : lang === "ko" ? "화면" : "画面"));
+  const name = q(target.name || (lang === "en" ? "screen" : lang === "zh" ? "屏幕" : lang === "ko" ? "화면" : lang === "vi" ? "màn hình" : "画面"));
   if (lang === "ja") return `${name}画面へ${a.transition !== "none" ? `${tr}で` : ""}遷移する`;
   if (lang === "zh") return `${a.transition !== "none" ? `以${tr}的方式` : ""}跳转到${name}屏幕`;
   if (lang === "ko") return `${name} 화면으로${a.transition !== "none" ? ` ${tr} 전환하여` : ""} 이동한다`;
+  if (lang === "vi") return `mở màn hình ${name}${a.transition !== "none" ? ` bằng hiệu ứng ${tr}` : ""}`;
   return `opens the ${name} screen${a.transition !== "none" ? ` with ${tr}` : ""}`;
 }
 
@@ -583,12 +673,13 @@ function slotName(it: Item, slot: string, lang: Lang): string {
     const tab = it.tabs?.[i];
     const q = quote(lang);
     const label = tab?.label ? q(tab.label) : `#${i + 1}`;
-    return lang === "ja" ? `${label}の項目` : lang === "zh" ? `${label}项` : lang === "ko" ? `${label} 항목` : `the ${label} destination`;
+    return lang === "ja" ? `${label}の項目` : lang === "zh" ? `${label}项` : lang === "ko" ? `${label} 항목` : lang === "vi" ? `mục ${label}` : `the ${label} destination`;
   }
   const icon = slot === "icon2" ? it.icon2 : it.icon;
   if (lang === "ja") return `${slot === "icon2" ? "右" : "左"}の ${icon ?? ""} アイコンボタン`;
   if (lang === "zh") return `${slot === "icon2" ? "右侧" : "左侧"}的 ${icon ?? ""} 图标按钮`;
   if (lang === "ko") return `${slot === "icon2" ? "오른쪽" : "왼쪽"} ${icon ?? ""} 아이콘 버튼`;
+  if (lang === "vi") return `nút biểu tượng ${icon ?? ""} bên ${slot === "icon2" ? "phải" : "trái"}`;
   return `the ${icon ?? ""} icon button on the ${slot === "icon2" ? "right" : "left"}`;
 }
 
@@ -597,11 +688,11 @@ function notes(g: Group, frames: Frame[], lang: Lang): string[] {
   const q = quote(lang);
   for (const it of g.items) {
     const noun = KIND_TEXT[lang][it.kind]?.noun ?? it.kind;
-    const name = hasText(it.label) && it.kind !== "text" ? (lang === "en" ? `The ${q(it.label)} ${noun}` : `${q(it.label)}${lang === "ko" ? " " : ""}${noun}`) : lang === "en" ? `The ${noun}` : hasText(it.label) ? (lang === "ja" ? `テキスト${q(it.label)}` : lang === "zh" ? `文本${q(it.label)}` : `텍스트 ${q(it.label)}`) : noun;
+    const name = hasText(it.label) && it.kind !== "text" ? (lang === "en" ? `The ${q(it.label)} ${noun}` : lang === "vi" ? `${noun} ${q(it.label)}` : `${q(it.label)}${lang === "ko" ? " " : ""}${noun}`) : lang === "en" ? `The ${noun}` : hasText(it.label) ? (lang === "ja" ? `テキスト${q(it.label)}` : lang === "zh" ? `文本${q(it.label)}` : lang === "vi" ? `văn bản ${q(it.label)}` : `텍스트 ${q(it.label)}`) : noun;
     const parts: string[] = [];
     if (it.action) {
       const a = actionText(it.action, frames, lang);
-      if (a) parts.push(lang === "ja" ? `タップすると${a}` : lang === "zh" ? `点击后${a}` : lang === "ko" ? `탭하면 ${a}` : `${a} when tapped`);
+      if (a) parts.push(lang === "ja" ? `タップすると${a}` : lang === "zh" ? `点击后${a}` : lang === "ko" ? `탭하면 ${a}` : lang === "vi" ? `khi nhấn sẽ ${a}` : `${a} when tapped`);
     }
     for (const [slot, action] of Object.entries(it.actions ?? {})) {
       if (!action) continue;
@@ -609,7 +700,7 @@ function notes(g: Group, frames: Frame[], lang: Lang): string[] {
       if (!a) continue;
       const s = slotName(it, slot, lang);
       if (lang === "en") out.push(`Tapping ${s} of ${name.replace(/^The /, "the ")} ${a}.`);
-      else parts.push(lang === "ja" ? `${s}をタップすると${a}` : lang === "zh" ? `点击${s}后${a}` : `${s}을 탭하면 ${a}`);
+      else parts.push(lang === "ja" ? `${s}をタップすると${a}` : lang === "zh" ? `点击${s}后${a}` : lang === "ko" ? `${s}을 탭하면 ${a}` : `nhấn ${s} sẽ ${a}`);
     }
     if (it.toggle) {
       const vt = VARIANT_TEXT[lang];
@@ -635,6 +726,12 @@ function notes(g: Group, frames: Frame[], lang: Lang): string[] {
         else if (icon === null) changes.push("아이콘이 사라진다");
         if (variant) changes.push(`변경할 스타일: ${vt[variant]}`);
         parts.push(`탭할 때마다 켜짐/꺼짐이 전환되는 토글 버튼으로 만든다${changes.length ? `(켜졌을 때 ${changes.join(", ")})` : ""}`);
+      } else if (lang === "vi") {
+        if (label !== undefined) changes.push(`nhãn đổi thành ${qe(label)}`);
+        if (icon) changes.push(`biểu tượng đổi thành ${icon}`);
+        else if (icon === null) changes.push("ẩn biểu tượng");
+        if (variant) changes.push(`kiểu đổi thành ${vt[variant]}`);
+        parts.push(`là nút bật/tắt đổi trạng thái sau mỗi lần nhấn${changes.length ? ` (khi bật: ${changes.join(", ")})` : ""}`);
       } else {
         if (label !== undefined) changes.push(`the label becomes ${qe(label)}`);
         if (icon) changes.push(`the icon becomes ${icon}`);
@@ -648,6 +745,7 @@ function notes(g: Group, frames: Frame[], lang: Lang): string[] {
     if (lang === "ja") out.push(`${name}は、${parts.join("。また、")}。`);
     else if (lang === "zh") out.push(`${name}：${parts.join("；")}。`);
     else if (lang === "ko") out.push(`${name}: ${parts.join(". 또한 ")}.`);
+    else if (lang === "vi") out.push(`${name}: ${parts.join("; ")}.`);
     else out.push(`${name} ${parts.join(". It also ")}.`);
   }
   return out;
@@ -656,7 +754,7 @@ function notes(g: Group, frames: Frame[], lang: Lang): string[] {
 function swipeNotes(f: Frame, frames: Frame[], lang: Lang): string[] {
   const out: string[] = [];
   const q = quote(lang);
-  const screen = lang === "en" ? "screen" : lang === "zh" ? "屏幕" : lang === "ko" ? "화면" : "画面";
+  const screen = lang === "en" ? "screen" : lang === "zh" ? "屏幕" : lang === "ko" ? "화면" : lang === "vi" ? "màn hình" : "画面";
   for (const d of SWIPE_DIRS) {
     const to = f.swipe?.[d.key];
     if (!to) continue;
@@ -667,6 +765,7 @@ function swipeNotes(f: Frame, frames: Frame[], lang: Lang): string[] {
     if (lang === "ja") out.push(`${name}画面は、${sw}すると指の動きに追従して${a}。`);
     else if (lang === "zh") out.push(`${name}屏幕：${sw}时跟随手指移动并${a}。`);
     else if (lang === "ko") out.push(`${name} 화면은 ${sw}하면 손가락을 따라 움직이며 ${a}.`);
+    else if (lang === "vi") out.push(`Màn hình ${name}: khi ${sw}, màn hình đi theo ngón tay và ${a}.`);
     else out.push(`The ${name} screen ${a} when ${sw}; the screen follows the finger while dragging.`);
   }
   return out;
@@ -749,6 +848,12 @@ function zone(bb: Rect, within: Rect, lang: Lang, phone: boolean): string {
     const hh = horiz < 0 ? "" : [" 왼쪽 정렬로", "", " 오른쪽 정렬로"][horiz];
     return `${v}${hh}`;
   }
+  if (lang === "vi") {
+    const v = ["Gần phía trên", "Ở giữa", "Gần phía dưới"][vert];
+    if (horiz === 1) return `${v}, căn giữa`;
+    const hh = horiz < 0 ? "" : [", căn trái", "", ", căn phải"][horiz];
+    return `${v}${hh}`;
+  }
   const v = ["Near the top", "In the middle", "Near the bottom"][vert];
   const hh = horiz < 0 ? "" : [", aligned left", ", centered", ", aligned right"][horiz];
   return `${v}${hh}`;
@@ -758,7 +863,7 @@ function zone(bb: Rect, within: Rect, lang: Lang, phone: boolean): string {
 function rowText(row: LNode[], where: string, lang: Lang, within: Rect): string {
   if (row.length === 1) {
     const d = groupText(row[0].g, lang);
-    return lang === "ja" ? `${where}${d}を置きます。` : lang === "zh" ? `${where}放置${d}。` : lang === "ko" ? `${where} 다음 항목을 배치합니다: ${d}.` : `${where}: ${d}.`;
+    return lang === "ja" ? `${where}${d}を置きます。` : lang === "zh" ? `${where}放置${d}。` : lang === "ko" ? `${where} 다음 항목을 배치합니다: ${d}.` : lang === "vi" ? `${where}: đặt ${d}.` : `${where}: ${d}.`;
   }
   const last = row[row.length - 1];
   const fillsRight = last.bb.r >= within.r - 24;
@@ -774,6 +879,10 @@ function rowText(row: LNode[], where: string, lang: Lang, within: Rect): string 
   if (lang === "ko") {
     const stretch = fillsRight ? `, 마지막 항목(${groupName(last.g, "ko")})은 오른쪽 끝까지 남은 너비를 채웁니다` : "";
     return `${where}, 왼쪽부터 한 행에 다음 항목을 배치합니다: ${descs.join(", ")}(같은 줄에 세로 중앙 정렬하고 쌓거나 줄 바꿈하지 않음${stretch}).`;
+  }
+  if (lang === "vi") {
+    const stretch = fillsRight ? `; ${groupName(last.g, "vi")} kéo giãn để lấp phần chiều rộng còn lại tới mép phải` : "";
+    return `${where}, xếp một hàng từ trái sang phải: ${descs.join(", ")} (giữ cùng một hàng, căn giữa dọc, không xếp dọc hoặc xuống dòng${stretch}).`;
   }
   const stretch = fillsRight ? `; ${groupName(last.g, "en")} stretches to fill the remaining width to the right edge` : "";
   return `${where}, in one row from left to right: ${descs.join(", ")} (keep them on the same line, vertically centered; never stack or wrap them${stretch}).`;
@@ -798,7 +907,7 @@ function describeNodes(lines: string[], nodes: LNode[], within: Rect | null, wid
     };
     let where: string;
     if (within) where = zone(rowRect, box, lang, phone);
-    else where = lang === "ja" ? (i === 0 ? "まず" : "その下に") : lang === "zh" ? (i === 0 ? "首先" : "其下方") : lang === "ko" ? (i === 0 ? "먼저" : "그 아래에") : i === 0 ? "First" : "Below that";
+    else where = lang === "ja" ? (i === 0 ? "まず" : "その下に") : lang === "zh" ? (i === 0 ? "首先" : "其下方") : lang === "ko" ? (i === 0 ? "먼저" : "그 아래에") : lang === "vi" ? (i === 0 ? "Đầu tiên" : "Bên dưới") : i === 0 ? "First" : "Below that";
     /* a part that partly covers an earlier sibling is drawn on top of it */
     const overlaps: string[] = [];
     if (row.length === 1) {
@@ -810,28 +919,29 @@ function describeNodes(lines: string[], nodes: LNode[], within: Rect | null, wid
     }
     let line = rowText(row, where, lang, box);
     if (overlaps.length) {
-      const o = overlaps.join(lang === "en" ? " and " : lang === "ko" ? ", " : "、");
-      line = lang === "ja" ? `${line.replace(/。$/, "")}（${o}の上に一部重ねて前面に描画）。` : lang === "zh" ? `${line.replace(/。$/, "")}（部分覆盖在${o}之上，绘制在前面）。` : lang === "ko" ? `${line.replace(/\.$/, "")}(${o} 위에 일부 겹쳐 앞쪽에 그림).` : `${line.replace(/\.$/, "")} (partly overlapping ${o}, drawn on top).`;
+      const o = overlaps.join(lang === "en" ? " and " : lang === "ko" || lang === "vi" ? ", " : "、");
+      line = lang === "ja" ? `${line.replace(/。$/, "")}（${o}の上に一部重ねて前面に描画）。` : lang === "zh" ? `${line.replace(/。$/, "")}（部分覆盖在${o}之上，绘制在前面）。` : lang === "ko" ? `${line.replace(/\.$/, "")}(${o} 위에 일부 겹쳐 앞쪽에 그림).` : lang === "vi" ? `${line.replace(/\.$/, "")} (chồng một phần lên ${o} và được vẽ ở phía trước).` : `${line.replace(/\.$/, "")} (partly overlapping ${o}, drawn on top).`;
     }
     lines.push(`${pad}- ${line}`);
     for (const n of row) {
       if (!n.children.length) continue;
       const name = groupName(n.g, lang);
       lines.push(
-        `${pad}  - ${lang === "ja" ? `${name}の中には次を重ねて配置します（ボックス側を背景にし、以下はその前面に載せる。位置はボックス内での相対位置）:` : lang === "zh" ? `${name}内部叠放以下内容（以容器为背景，下列组件绘制在其前面，位置为容器内的相对位置）：` : lang === "ko" ? `${name} 안에 다음 항목을 겹쳐 배치합니다(컨테이너를 배경으로 하고 다음 부품은 그 앞에 배치하며, 위치는 컨테이너 내부 기준):` : `Inside ${name}, layered on top of it (the container is the background; positions are relative to it):`}`,
+        `${pad}  - ${lang === "ja" ? `${name}の中には次を重ねて配置します（ボックス側を背景にし、以下はその前面に載せる。位置はボックス内での相対位置）:` : lang === "zh" ? `${name}内部叠放以下内容（以容器为背景，下列组件绘制在其前面，位置为容器内的相对位置）：` : lang === "ko" ? `${name} 안에 다음 항목을 겹쳐 배치합니다(컨테이너를 배경으로 하고 다음 부품은 그 앞에 배치하며, 위치는 컨테이너 내부 기준):` : lang === "vi" ? `Bên trong ${name}, chồng các mục sau lên trên (vùng chứa làm nền; vị trí tính tương đối trong vùng chứa):` : `Inside ${name}, layered on top of it (the container is the background; positions are relative to it):`}`,
       );
       describeNodes(lines, n.children, n.bb, widths, lang, depth + 2, false);
     }
   });
 }
 
-const RAIL_LEAD: Record<Lang, string> = { ja: "左端に", en: "Along the left edge: ", zh: "左缘：", ko: "왼쪽 가장자리에 " };
+const RAIL_LEAD: Record<Lang, string> = { ja: "左端に", en: "Along the left edge: ", zh: "左缘：", ko: "왼쪽 가장자리에 ", vi: "Dọc mép trái: " };
 
 const WIDE_RAIL_STYLE: Record<Lang, string> = {
   ja: "M3 Expressive ナビゲーションレール: 折りたたみ時は幅 96dp、アイコンの下にラベル。展開時は幅 220dp、高さ 56dp の項目内でアイコンとラベルを横並びにし、間隔は 8dp。既存のトップアプリバーに合わせ、両モードの開閉状態すべてで背景は surfaceContainer。選択項目は secondaryContainer のピル型インジケータ、アイコンは onSecondaryContainer、ラベルは secondary を優先し、実際の背景（折りたたみ時は surfaceContainer、展開時は secondaryContainer）とのコントラストが 4.5:1 未満なら、それぞれ onSurface / onSecondaryContainer を使う。上部のメニューボタンで開閉する。非モーダル型は本文の横に配置し、モーダル型は展開時にスクリムとともに本文に重ね、背景操作を遮断する。スクリムのタップまたは Escape で閉じる。",
   en: "M3 Expressive navigation rail: 96dp wide when collapsed, with labels below icons. Expanded width is 220dp, with 56dp-high destinations and horizontal icon/label rows separated by 8dp. Match the existing top app bar with a surfaceContainer background in both modes, whether collapsed or expanded. The selected destination uses a secondaryContainer pill, onSecondaryContainer icon, and a label that prefers secondary. If its contrast against the actual background (surfaceContainer when collapsed, secondaryContainer when expanded) is below 4.5:1, use onSurface / onSecondaryContainer respectively. A top menu button toggles expansion. The non-modal variant sits beside the content; the modal variant overlays it with a scrim when expanded and blocks background interaction. Dismiss with a scrim tap or Escape.",
   zh: "M3 Expressive 侧边导航栏：折叠宽 96dp，标签位于图标下方。展开宽 220dp，项目高 56dp，图标与标签横向排列，间距 8dp。沿用现有顶部应用栏配色，两种模式在折叠与展开时均使用 surfaceContainer 背景。选中项用 secondaryContainer 胶囊指示器，图标为 onSecondaryContainer，文字优先使用 secondary；若与实际背景（折叠为 surfaceContainer，展开为 secondaryContainer）的对比度低于 4.5:1，则分别使用 onSurface / onSecondaryContainer。顶部菜单按钮切换展开与折叠。非模态型位于内容旁；模态型展开时带遮罩覆盖内容并阻止背景交互，点击遮罩或按 Escape 关闭。",
   ko: "M3 Expressive 내비게이션 레일: 접으면 너비 96dp, 아이콘 아래에 레이블을 배치한다. 펼치면 너비 220dp, 항목 높이 56dp, 아이콘과 레이블을 8dp 간격으로 가로 배치한다. 기존 상단 앱 바와 맞추어 두 모드의 접힌 상태와 펼친 상태 모두 surfaceContainer 배경을 사용한다. 선택 항목은 secondaryContainer 알약 표시기, onSecondaryContainer 아이콘, 레이블은 secondary를 우선 사용한다. 실제 배경(접힘: surfaceContainer, 펼침: secondaryContainer)과의 대비가 4.5:1 미만이면 각각 onSurface / onSecondaryContainer를 사용한다. 상단 메뉴 버튼으로 펼치기와 접기를 전환한다. 비모달은 콘텐츠 옆에 배치하고 모달은 펼칠 때 스크림과 함께 콘텐츠를 덮어 배경 조작을 차단한다. 스크림을 탭하거나 Escape를 누르면 닫힌다.",
+  vi: VI_WIDE_RAIL_STYLE,
 };
 
 function describeScreen(lines: string[], groups: Group[], frameRect: Rect | null, widths: Record<string, number>, lang: Lang) {
@@ -1076,6 +1186,7 @@ const STYLE_NOTES: Record<Lang, Partial<Record<Kind | "boxSheet", string>>> = {
     radio: "라디오 버튼: 20dp 원형. 선택 시 primary 테두리와 가운데 점, 미선택 시 onSurfaceVariant 테두리. 그룹에서 하나만 선택되며 레이블은 오른쪽 bodyLarge.",
     badge: "배지: 텍스트가 없으면 6dp 점, 있으면 높이 16dp 알약 모양. 배경 error, 텍스트 onError/labelSmall로 아이콘이나 항목 오른쪽 위에 겹쳐 둔다.",
   },
+  vi: VI_STYLE_NOTES,
 };
 
 /* ---------- theme: shape, type, motion ---------- */
@@ -1085,6 +1196,7 @@ const FONT_NOTE: Record<Lang, (name: string) => string> = {
   en: (n) => `Use ${n} as the typeface.`,
   zh: (n) => `字体使用 ${n}。`,
   ko: (n) => `사용할 글꼴: ${n}.`,
+  vi: VI_FONT_NOTE,
 };
 
 const THEME_NOTES: Record<Lang, { shape: Record<Theme["shape"], string>; emphasized: string; plainType: string; motion: Record<Theme["motion"], string> }> = {
@@ -1140,13 +1252,14 @@ const THEME_NOTES: Record<Lang, { shape: Record<Theme["shape"], string>; emphasi
       expressive: "모션은 MotionScheme.expressive()를 사용한다. 화면 전환과 상태 변화에 가볍게 튀는 스프링 효과를 적용한다.",
     },
   },
+  vi: VI_THEME_NOTES,
 };
 
 function themeLines(th: Theme, lang: Lang): string[] {
   const n = THEME_NOTES[lang];
   const font = FONTS.find((f) => f.key === th.font);
-  const fontName = font?.key === "system" ? (lang === "ja" ? "端末のシステムフォント" : lang === "zh" ? "设备的系统字体" : lang === "ko" ? "기기의 시스템 글꼴" : "the device's system font") : (font?.label ?? "Roboto");
-  const sp = lang === "en" || lang === "ko" ? " " : "";
+  const fontName = font?.key === "system" ? (lang === "ja" ? "端末のシステムフォント" : lang === "zh" ? "设备的系统字体" : lang === "ko" ? "기기의 시스템 글꼴" : lang === "vi" ? "phông chữ hệ thống của thiết bị" : "the device's system font") : (font?.label ?? "Roboto");
+  const sp = lang === "en" || lang === "ko" || lang === "vi" ? " " : "";
   return [`- ${n.shape[th.shape]}`, `- ${FONT_NOTE[lang](fontName)}${sp}${th.emphasized ? n.emphasized : n.plainType}`, `- ${n.motion[th.motion]}`];
 }
 
@@ -1208,6 +1321,7 @@ const GENERAL: Record<Lang, (string | ((pl: Platform) => string))[]> = {
     "아이콘은 Material Symbols Rounded를 사용한다.",
     (pl: Platform) => `${pl === "web" ? "브라우저" : "에뮬레이터나 실제 기기"} 동작 검증은 필요 없다. 구현 후 ${pl === "web" ? "production build를 실행하고 그 출력" : "서명된 release APK"}을 결과물로 제공한다.`,
   ],
+  vi: VI_GENERAL,
 };
 
 /** notes that differ on the web, where a browser has no status bar or gesture area to inset for */
@@ -1228,6 +1342,7 @@ const STYLE_NOTES_WEB: Record<Lang, Partial<Record<Kind, string>>> = {
     topAppBar: "顶部应用栏：高 64dp，背景为 surface。标题用 titleLarge，左右图标按钮 48dp。滚动时变为 surfaceContainer 的标准行为即可。",
     bottomNav: "导航栏：高 80dp，背景为 surfaceContainer。选中项用 secondaryContainer 的胶囊指示器（宽 64dp、高 32dp）表示，图标为填充样式，标签用 labelMedium。",
   },
+  vi: VI_STYLE_NOTES_WEB,
 };
 
 /* ---------- fixed phrases ---------- */
@@ -1243,7 +1358,7 @@ const viewportOf = (frames: Frame[], phone: boolean): Viewport => {
 const sizeLabel = (f: Frame, vp: Viewport, lang: Lang): string | undefined => {
   if (vp !== "mixed") return undefined;
   const { w, h } = frameSizeOf(f);
-  const kind = isPhoneFrame(f) ? { ja: "スマホ", en: "phone", zh: "手机", ko: "휴대전화" } : { ja: "デスクトップ", en: "desktop", zh: "桌面", ko: "데스크톱" };
+  const kind = isPhoneFrame(f) ? { ja: "スマホ", en: "phone", zh: "手机", ko: "휴대전화", vi: "điện thoại" } : { ja: "デスクトップ", en: "desktop", zh: "桌面", ko: "데스크톱", vi: "máy tính" };
   return `${kind[lang]} ${w}×${h}`;
 };
 
@@ -1405,6 +1520,7 @@ const PH = {
     styleIntro: "사용된 부품별 지침입니다. 수치는 M3 Expressive 기본값이며 표준 컴포넌트가 제공하는 동작은 그대로 사용하고 내용에 맞게 조정할 수 있습니다.",
     hGeneral: "## 전체 지침",
   },
+  vi: VI_PH,
 };
 
 export function buildPrompt(doc: Doc, widths: Record<string, number>, onlyFrameId?: string, lang: Lang = getLang()): string {

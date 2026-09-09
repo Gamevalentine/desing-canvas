@@ -1,25 +1,27 @@
 "use client";
 
 import { createContext, useContext } from "react";
+import { VI_COLOR_TOKEN_TEXT, VI_FAB_MENU_TABS, VI_KIND_TEXT, VI_NAV_TABS, VI_SEED_TEXT, VI_SELECT_OPTIONS, VI_SWIPE_TEXT, VI_TAB_LABELS, VI_TEXT_TOKEN_TEXT, VI_TRANSITION_TEXT, VI_UI } from "./vi";
 
-export type Lang = "ja" | "en" | "zh" | "ko";
+export type Lang = "ja" | "en" | "zh" | "ko" | "vi";
 export const LANGS: { key: Lang; label: string }[] = [
   { key: "ja", label: "日本語" },
   { key: "en", label: "English" },
   { key: "zh", label: "中文" },
   { key: "ko", label: "한국어" },
+  { key: "vi", label: "Tiếng Việt" },
 ];
-export const isLang = (v: unknown): v is Lang => v === "ja" || v === "en" || v === "zh" || v === "ko";
+export const isLang = (v: unknown): v is Lang => v === "ja" || v === "en" || v === "zh" || v === "ko" || v === "vi";
 
 /* A module-level copy lets non-React helpers (item defaults, prompt text)
  * follow the language without threading it through every call. */
-let current: Lang = "ja";
+let current: Lang = "vi";
 export const getLang = () => current;
 export const setGlobalLang = (l: Lang) => {
   current = l;
 };
 
-export const LangContext = createContext<Lang>("ja");
+export const LangContext = createContext<Lang>("vi");
 export const useLang = () => useContext(LangContext);
 
 export const SEED_TEXT: Record<Lang, { favorite: string; share: string; inbox: string; starred: string; archive: string; supporting: string; start: string }> = {
@@ -27,6 +29,7 @@ export const SEED_TEXT: Record<Lang, { favorite: string; share: string; inbox: s
   en: { favorite: "Favorite", share: "Share", inbox: "Inbox", starred: "Starred", archive: "Archive", supporting: "Supporting text", start: "Get started" },
   zh: { favorite: "收藏", share: "分享", inbox: "收件箱", starred: "已加星标", archive: "归档", supporting: "辅助文本", start: "开始" },
   ko: { favorite: "즐겨찾기", share: "공유", inbox: "받은편지함", starred: "별표 표시", archive: "보관함", supporting: "보조 텍스트", start: "시작하기" },
+  vi: VI_SEED_TEXT,
 };
 
 /** ponytail: matches defaults by text; add provenance if authored copies must be distinguished. */
@@ -64,12 +67,14 @@ export const TEXT_TOKEN_TEXT = {
   ja: { onSurface: "標準（オンサーフェス）", onSurfaceVariant: "控えめ（オンサーフェスバリアント）", primary: "プライマリ", secondary: "セカンダリ", onPrimaryContainer: "オンプライマリコンテナ", onSecondaryContainer: "オンセカンダリコンテナ", onTertiaryContainer: "オンターシャリコンテナ", inverseOnSurface: "反転オンサーフェス" },
   zh: { onSurface: "表面文字", onSurfaceVariant: "表面次要文字", primary: "主色", secondary: "次色", onPrimaryContainer: "主色容器文字", onSecondaryContainer: "次色容器文字", onTertiaryContainer: "第三色容器文字", inverseOnSurface: "反色表面文字" },
   ko: { onSurface: "표면 텍스트", onSurfaceVariant: "표면 보조 텍스트", primary: "주 색상", secondary: "보조 색상", onPrimaryContainer: "주 색상 컨테이너 텍스트", onSecondaryContainer: "보조 색상 컨테이너 텍스트", onTertiaryContainer: "세 번째 색상 컨테이너 텍스트", inverseOnSurface: "반전 표면 텍스트" },
+  vi: VI_TEXT_TOKEN_TEXT,
 };
 
 export const COLOR_TOKEN_TEXT = {
   ja: { surface: "サーフェス", surfaceContainerLow: "コンテナ（低）", surfaceContainer: "コンテナ", surfaceContainerHigh: "コンテナ（高）", surfaceContainerHighest: "コンテナ（最高）", primaryContainer: "プライマリコンテナ", secondaryContainer: "セカンダリコンテナ", tertiaryContainer: "ターシャリコンテナ", primary: "プライマリ", inverseSurface: "反転サーフェス" },
   zh: { surface: "表面", surfaceContainerLow: "低层容器", surfaceContainer: "容器", surfaceContainerHigh: "高层容器", surfaceContainerHighest: "最高层容器", primaryContainer: "主色容器", secondaryContainer: "次色容器", tertiaryContainer: "第三色容器", primary: "主色", inverseSurface: "反色表面" },
   ko: { surface: "표면", surfaceContainerLow: "낮은 컨테이너", surfaceContainer: "컨테이너", surfaceContainerHigh: "높은 컨테이너", surfaceContainerHighest: "가장 높은 컨테이너", primaryContainer: "주 색상 컨테이너", secondaryContainer: "보조 색상 컨테이너", tertiaryContainer: "세 번째 색상 컨테이너", primary: "주 색상", inverseSurface: "반전 표면" },
+  vi: VI_COLOR_TOKEN_TEXT,
 };
 
 /** exported for the parity tests only; read strings through t() */
@@ -493,7 +498,8 @@ export const KO: Record<UIKey, string> = {
   aiErrorInsecure: "기본 URL은 https를 사용하거나 localhost를 가리켜야 합니다", aiErrorNetwork: "연결할 수 없습니다. URL, 네트워크 및 서버의 CORS 설정을 확인하세요",
 };
 
-export const t = (key: UIKey, lang: Lang = current): string => (lang === "ko" ? KO[key] : UI[key][lang]);
+export const VI: Record<UIKey, string> = VI_UI;
+export const t = (key: UIKey, lang: Lang = current): string => (lang === "ko" ? KO[key] : lang === "vi" ? VI[key] : UI[key][lang]);
 
 /* ---- part defaults and nouns ---- */
 
@@ -641,6 +647,7 @@ export const KIND_TEXT: Record<
     radio: { noun: "라디오 버튼", label: "옵션" },
     badge: { noun: "배지", label: "3" },
   },
+  vi: VI_KIND_TEXT,
 };
 
 /** default labels of a tab row */
@@ -649,6 +656,7 @@ export const TAB_LABELS: Record<Lang, string[]> = {
   en: ["For you", "Following", "Trending", "New", "Saved"],
   zh: ["推荐", "关注", "热门", "最新", "已保存"],
   ko: ["추천", "팔로잉", "인기", "새 항목", "저장됨"],
+  vi: VI_TAB_LABELS,
 };
 
 /** default entries of a FAB menu */
@@ -658,6 +666,7 @@ export const SELECT_OPTIONS: Record<Lang, string[]> = {
   en: ["Option 1", "Option 2", "Option 3"],
   zh: ["选项 1", "选项 2", "选项 3"],
   ko: ["옵션 1", "옵션 2", "옵션 3"],
+  vi: VI_SELECT_OPTIONS,
 };
 
 export const FAB_MENU_TABS: Record<Lang, { icon: string; label: string }[]> = {
@@ -689,6 +698,7 @@ export const FAB_MENU_TABS: Record<Lang, { icon: string; label: string }[]> = {
     { icon: "attach_file", label: "파일" },
     { icon: "event", label: "일정" },
   ],
+  vi: VI_FAB_MENU_TABS,
 };
 
 export const NAV_TABS: Record<Lang, { icon: string; label: string }[]> = {
@@ -716,6 +726,7 @@ export const NAV_TABS: Record<Lang, { icon: string; label: string }[]> = {
     { icon: "favorite", label: "저장됨" },
     { icon: "settings", label: "설정" },
   ],
+  vi: VI_NAV_TABS,
 };
 
 export const TRANSITION_TEXT: Record<Lang, Record<string, string>> = {
@@ -755,6 +766,7 @@ export const TRANSITION_TEXT: Record<Lang, Record<string, string>> = {
     expand: "확대",
     none: "애니메이션 없음",
   },
+  vi: VI_TRANSITION_TEXT,
 };
 
 export const SWIPE_TEXT: Record<Lang, Record<string, string>> = {
@@ -762,4 +774,5 @@ export const SWIPE_TEXT: Record<Lang, Record<string, string>> = {
   en: { left: "swiping left", right: "swiping right", up: "swiping up", down: "swiping down" },
   zh: { left: "向左滑动", right: "向右滑动", up: "向上滑动", down: "向下滑动" },
   ko: { left: "왼쪽으로 스와이프", right: "오른쪽으로 스와이프", up: "위로 스와이프", down: "아래로 스와이프" },
+  vi: VI_SWIPE_TEXT,
 };
